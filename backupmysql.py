@@ -76,7 +76,6 @@ class backup(object):
         datetoday = datetime.datetime.now().strftime('%Y%m%d')
         backupdir = os.path.join(backupdir,mysqlport)
         binlogbackupdir = os.path.join(backupdir,"bin")
-        print("************************************************************"+mysqlport)
         conn = pymysql.connect(host=host, port=int(mysqlport), user=user, passwd=password, db="mysql", charset="utf8")
         cur = conn.cursor()
         cur.execute("flush logs")
