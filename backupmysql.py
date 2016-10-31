@@ -63,7 +63,6 @@ class backup(object):
                 newestdir = i
             else:
                 pass
-
             if newestdir != "" and newestdir != None:
                 cmd =tool+" --apply-log "+os.path.join(backuptodir,newestdir)
                 subprocess.call(cmd,shell=True)
