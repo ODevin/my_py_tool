@@ -76,11 +76,23 @@ class backup(object):
 
     def connAndbackupbinlog(self,cnffile,backupdir,host,user,password):
         readinfo = readFile()
-        mysqlbinlogindexfile = readinfo.MysqlConfigureFile(cnffile)["log-bin"]
-        mysqlport = readinfo.MysqlConfigureFile(cnffile)["port"]
+        if "log-bin" in readinfo.MysqlConfigureFile(cnffile):
+            mysqlbinlogindexfile = readinfo.MysqlConfigureFile(cnffile)["log-bin"]
+        else:
+            os.error("Mysql is not enabled binary log !!!")
+            sys.exit(5)
+        if "port" in readinfo.MysqlConfigureFile(cnffile):
+            mysqlport = readinfo.MysqlConfigureFile(cnffile)["port"]
+        else:
+            mysqlport="3306"
+        if "bind-address" in readinfo.MysqlConfigureFile(cnffile):
+            bindadd = readinfo.MysqlConfigureFile(cnffile)["bind-address"]
+        else:
+            bindadd = "localhost"
         mysqlbinlogpath = os.path.dirname(mysqlbinlogindexfile)
         datetoday = datetime.datetime.now().strftime('%Y%m%d')
-        backupdir = os.path.join(backupdir,mysqlport)
+        flag=bindadd+"-"+mysqlport
+        backupdir = os.path.join(backupdir,flag)
         binlogbackupdir = os.path.join(backupdir,"bin")
         conn = pymysql.connect(host=host, port=int(mysqlport), user=user, passwd=password, db="mysql", charset="utf8")
         cur = conn.cursor()
@@ -101,9 +113,17 @@ class backup(object):
 
     def connAndbackupalldata(self,tool,backupdir,mysqlconfigurefile,mysqluser,userpassword,host):
         readinfo = readFile()
-        mysqlport = readinfo.MysqlConfigureFile(mysqlconfigurefile)["port"]
+        if "port" in readinfo.MysqlConfigureFile(mysqlconfigurefile):
+            mysqlport = readinfo.MysqlConfigureFile(mysqlconfigurefile)["port"]
+        else:
+            mysqlport="3306"
+        if "bind-address" in readinfo.MysqlConfigureFile(mysqlconfigurefile):
+            bindadd = readinfo.MysqlConfigureFile(mysqlconfigurefile)["bind-address"]
+        else:
+            bindadd = "localhost"
+        flag = bindadd + "-" + mysqlport
         datetoday = datetime.datetime.now().strftime('%Y%m%d')
-        backupdir = os.path.join(backupdir,mysqlport)
+        backupdir = os.path.join(backupdir,flag)
         self.backupMysqlAlldata(tool=tool,backuptodir=backupdir,mysqlconfigurefile=mysqlconfigurefile,mysqluser=mysqluser,userpassword=userpassword,port=mysqlport)
 
 #===================================================================================================
