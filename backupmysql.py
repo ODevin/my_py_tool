@@ -9,7 +9,7 @@ class getParameter(object):
         parser.add_argument('-A', action='store_true',default=False,dest='fullbackup',help='back up all data')
         parser.add_argument('-u', action='store',default="root",dest='user',help='mysql user,default value "root"')
         parser.add_argument('-p', action='store',default="",dest='passwd',help='mysql user password , default value is None')
-        parser.add_argument('--host', action='store',default="",dest='host',help='mysql server host')
+        parser.add_argument('--host', action='store',default="localhost",dest='host',help='mysql server host')
         args,unkuown=parser.parse_known_args()
         return args
 
@@ -49,7 +49,7 @@ class backup(object):
                 shutil.copy(i,os.path.join(destinationdir,os.path.basename(i)+"-"+data))
 
     def backupMysqlAlldata(self,tool=None,backuptodir=None,socker=None,mysqlconfigurefile=None,mysqluser=None,userpassword=None,port=None):
-        date_time = datetime.datetime.now().strftime('%Y-%m-%d_%H')
+        date_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
         newestdir = ""
         if os.path.exists(tool) and re.search("[1|3|5|7]+",oct(os.stat(tool).st_mode)[-3:]) != None:
             cmd=tool+" --defaults-file="+mysqlconfigurefile+" --user="+mysqluser+" --password='"+userpassword+"' --port="+port+"  "+backuptodir
@@ -61,11 +61,12 @@ class backup(object):
         for i in l:
             if os.path.isdir(os.path.join(backuptodir,i)) and re.search(rulestr,i) != None:
                 newestdir = i
-        cmd =tool+" --apply-log "+os.path.join(backuptodir,newestdir)
-        subprocess.call(cmd,shell=True)
-        backupfile = os.path.join(backuptodir,date_time+".tar.gz")
-        cmd = "tar zcvf "+backupfile+" -C "+backuptodir+" "+newestdir
-        subprocess.call(cmd,shell=True)
+                cmd =tool+" --apply-log "+os.path.join(backuptodir,newestdir)
+                subprocess.call(cmd,shell=True)
+                backupfile = os.path.join(backuptodir,date_time+".tar.gz")
+                cmd = "tar zcvf "+backupfile+" -C "+backuptodir+" "+newestdir
+                subprocess.call(cmd,shell=True)
+                shutil.rmtree(os.path.join(backuptodir,i))
 
     def connAndbackupbinlog(self,cnffile,backupdir,host,user,password):
         readinfo = readFile()
@@ -75,8 +76,8 @@ class backup(object):
         datetoday = datetime.datetime.now().strftime('%Y%m%d')
         backupdir = os.path.join(backupdir,mysqlport)
         binlogbackupdir = os.path.join(backupdir,"bin")
-
-        conn = pymysql.connect(host=host, port=mysqlport, user=user, passwd=password, db="mysql", charset="utf8")
+        print("************************************************************"+mysqlport)
+        conn = pymysql.connect(host=host, port=int(mysqlport), user=user, passwd=password, db="mysql", charset="utf8")
         cur = conn.cursor()
         cur.execute("flush logs")
         conn.close()
@@ -88,7 +89,7 @@ class backup(object):
         lastbinlogfilename = os.path.basename(lastbinlogfile)
         self.backupMysqlBinLog(exceptlastbinlogfilelist,binlogbackupdir,datetoday)
         time.sleep(3)
-        conn = pymysql.connect(host=host, port=port, user=user, passwd=password, db="mysql", charset="utf8")
+        conn = pymysql.connect(host=host, port=int(mysqlport), user=user, passwd=password, db="mysql", charset="utf8")
         cur = conn.cursor()
         cur.execute("purge binary logs to '" + lastbinlogfilename + "'")
         conn.close()
@@ -104,9 +105,8 @@ class backup(object):
 parameter=getParameter()
 args=parameter.getmysqlParameter()
 # print(args)
+BU=backup()
 if args.fullbackup:
-    backup.connAndbackupalldata(tool="/usr/bin/innobackupex",backupdir=args.backupdir,mysqlconfigurefile=args.configurefile,mysqluser=args.user,userpassword=args.passwd,host=args.host)
+    BU.connAndbackupalldata(tool="/usr/bin/innobackupex",backupdir=args.backupdir,mysqlconfigurefile=args.configurefile,mysqluser=args.user,userpassword=args.passwd,host=args.host)
 else:
-    backup.connAndbackupbinlog(backupdir=args.backupdir,
-                               cnffile=args.configurefile, user=args.user, password=args.passwd,
-                                host=args.host)
+    BU.connAndbackupbinlog(backupdir=args.backupdir,cnffile=args.configurefile, user=args.user, password=args.passwd,host=args.host)
