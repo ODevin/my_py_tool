@@ -72,7 +72,7 @@ class backup(object):
                 subprocess.call(cmd,shell=True)
                 shutil.rmtree(os.path.join(backuptodir,j))
         else:
-            print(os.path.join(backuptodir, i)+" Not a directory or is not existent,maybe "+tool+ " backup is fail!!!")
+            print(" Not a directory or is not existent,maybe "+tool+ " backup is fail!!!")
             sys.exit(4)
 
     def connAndbackupbinlog(self,cnffile,backupdir,host,user,password):
