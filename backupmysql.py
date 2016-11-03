@@ -50,7 +50,7 @@ class backup(object):
 
     def backupMysqlAlldata(self,tool=None,backuptodir=None,socker=None,mysqlconfigurefile=None,mysqluser=None,userpassword=None,port=None):
         date_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
-        newestdir = None
+        newestdir = []
         if os.path.exists(tool) and re.search("[1|3|5|7]+",oct(os.stat(tool).st_mode)[-3:]) != None:
             cmd=tool+" --defaults-file="+mysqlconfigurefile+" --user="+mysqluser+" --password='"+userpassword+"' --port="+port+"  "+backuptodir
             subprocess.call(cmd,shell=True)
@@ -60,19 +60,20 @@ class backup(object):
         rulestr="("+date_time+")+"
         for i in l:
             if os.path.isdir(os.path.join(backuptodir,i)) and re.search(rulestr,i) != None:
-                newestdir = i
+                newestdir.append(i)
             else:
                 pass
-            if newestdir != "" and newestdir != None:
-                cmd =tool+" --apply-log "+os.path.join(backuptodir,newestdir)
+        if len(newestdir) != 0:
+            for j in newestdir:
+                cmd =tool+" --apply-log "+os.path.join(backuptodir,j)
                 subprocess.call(cmd,shell=True)
                 backupfile = os.path.join(backuptodir,date_time+".tar.gz")
-                cmd = "tar zcvf "+backupfile+" -C "+backuptodir+" "+newestdir
+                cmd = "tar zcvf "+backupfile+" -C "+backuptodir+" "+j
                 subprocess.call(cmd,shell=True)
-                shutil.rmtree(os.path.join(backuptodir,i))
-            else:
-                print(os.path.join(backuptodir, i)+" Not a directory or is not existent,maybe "+tool+ " backup is fail!!!")
-                sys.exit(4)
+                shutil.rmtree(os.path.join(backuptodir,j))
+        else:
+            print(os.path.join(backuptodir, i)+" Not a directory or is not existent,maybe "+tool+ " backup is fail!!!")
+            sys.exit(4)
 
     def connAndbackupbinlog(self,cnffile,backupdir,host,user,password):
         readinfo = readFile()
