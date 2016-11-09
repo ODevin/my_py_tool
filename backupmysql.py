@@ -9,7 +9,7 @@ class getParameter(object):
         parser.add_argument('-A', action='store_true',default=False,dest='fullbackup',help='back up all data')
         parser.add_argument('-u', action='store',default="root",dest='user',help='mysql user,default value "root"')
         parser.add_argument('-p', action='store',default="",dest='passwd',help='mysql user password , default value is None')
-        parser.add_argument('--host', action='store',default="localhost",dest='host',help='mysql server host')
+        parser.add_argument('--host', action='store',default=None,dest='host',help='mysql server host')
         args,unkuown=parser.parse_known_args()
         return args
 
@@ -52,7 +52,11 @@ class backup(object):
         date_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
         newestdir = []
         if os.path.exists(tool) and re.search("[1|3|5|7]+",oct(os.stat(tool).st_mode)[-3:]) != None:
-            cmd=tool+" --defaults-file="+mysqlconfigurefile+" --user="+mysqluser+" --host="+host+" --password='"+userpassword+"' --port="+port+"  "+backuptodir
+            if host!=None:
+                cmd=tool+" --defaults-file="+mysqlconfigurefile+" --user="+mysqluser+" --host="+host+" --password='"+userpassword+"' --port="+port+"  "+backuptodir
+            else:
+                cmd=tool+" --defaults-file="+mysqlconfigurefile+" --user="+mysqluser+" --socket="+socker+" --password='"+userpassword+"' --port="+port+"  "+backuptodir
+
             subprocess.call(cmd,shell=True)
         else:
             pass
@@ -75,7 +79,7 @@ class backup(object):
             print(" Not a directory or is not existent,maybe "+tool+ " backup is fail!!!")
             sys.exit(4)
 
-    def connAndbackupbinlog(self,cnffile,backupdir,host,user,password):
+    def connAndbackupbinlog(self,cnffile=None,backupdir=None,host=None,user=None,password=None):
         readinfo = readFile()
         if "log-bin" in readinfo.MysqlConfigureFile(cnffile):
             mysqlbinlogindexfile = readinfo.MysqlConfigureFile(cnffile)["log-bin"]
@@ -90,15 +94,23 @@ class backup(object):
             bindadd = readinfo.MysqlConfigureFile(cnffile)["bind-address"]
         else:
             bindadd = host
+        if "socket" in readinfo.MysqlConfigureFile(cnffile):
+            socket = readinfo.MysqlConfigureFile(cnffile)["socket"]
+        else:
+            socket = "/tmp/mysql.sock"
         mysqlbinlogpath = os.path.dirname(mysqlbinlogindexfile)
         datetoday = datetime.datetime.now().strftime('%Y%m%d')
         flag=bindadd+"-"+mysqlport
         backupdir = os.path.join(backupdir,flag)
         binlogbackupdir = os.path.join(backupdir,"bin")
-        conn = pymysql.connect(host=host, port=int(mysqlport), user=user, passwd=password, db="mysql", charset="utf8")
+        if bindadd==None :
+            conn = pymysql.connect(unix_socket=socket, port=int(mysqlport), user=user, passwd=password, db="mysql", charset="utf8")
+        elif bindadd=="localhost" or bindadd=="127.0.0.1":
+            conn = pymysql.connect(host=bindadd,unix_socket=socket, port=int(mysqlport), user=user, passwd=password, db="mysql", charset="utf8")
+        else:
+            conn = pymysql.connect(host=bindadd, port=int(mysqlport), user=user, passwd=password, db="mysql", charset="utf8")
         cur = conn.cursor()
         cur.execute("flush logs")
-        conn.close()
         time.sleep(3)
 
         allbinlogfile = readinfo.MysqlBinlongIndexFile(mysqlbinlogindexfile)
@@ -107,12 +119,10 @@ class backup(object):
         lastbinlogfilename = os.path.basename(lastbinlogfile)
         self.backupMysqlBinLog(exceptlastbinlogfilelist,binlogbackupdir,datetoday)
         time.sleep(3)
-        conn = pymysql.connect(host=host, port=int(mysqlport), user=user, passwd=password, db="mysql", charset="utf8")
-        cur = conn.cursor()
         cur.execute("purge binary logs to '" + lastbinlogfilename + "'")
         conn.close()
 
-    def connAndbackupalldata(self,tool,backupdir,mysqlconfigurefile,mysqluser,userpassword,host):
+    def connAndbackupalldata(self,tool=None,backupdir=None,mysqlconfigurefile=None,mysqluser=None,userpassword=None,host=None):
         readinfo = readFile()
         if "port" in readinfo.MysqlConfigureFile(mysqlconfigurefile):
             mysqlport = readinfo.MysqlConfigureFile(mysqlconfigurefile)["port"]
@@ -122,10 +132,14 @@ class backup(object):
             bindadd = readinfo.MysqlConfigureFile(mysqlconfigurefile)["bind-address"]
         else:
             bindadd = host
+        if "socket" in readinfo.MysqlConfigureFile(mysqlconfigurefile):
+            socket = readinfo.MysqlConfigureFile(mysqlconfigurefile)["socket"]
+        else:
+            socket = "/tmp/mysql.sock"
         flag = bindadd + "-" + mysqlport
         datetoday = datetime.datetime.now().strftime('%Y%m%d')
         backupdir = os.path.join(backupdir,flag)
-        self.backupMysqlAlldata(tool=tool,backuptodir=backupdir,mysqlconfigurefile=mysqlconfigurefile,mysqluser=mysqluser,userpassword=userpassword,port=mysqlport,host=host)
+        self.backupMysqlAlldata(tool=tool,backuptodir=backupdir,mysqlconfigurefile=mysqlconfigurefile,mysqluser=mysqluser,userpassword=userpassword,port=mysqlport,host=host,socker=socket)
 
 #===================================================================================================
 parameter=getParameter()
