@@ -48,11 +48,11 @@ class backup(object):
             for i in sourcefilelist:
                 shutil.copy(i,os.path.join(destinationdir,os.path.basename(i)+"-"+data))
 
-    def backupMysqlAlldata(self,tool=None,backuptodir=None,socker=None,mysqlconfigurefile=None,mysqluser=None,userpassword=None,port=None):
+    def backupMysqlAlldata(self,tool=None,backuptodir=None,socker=None,mysqlconfigurefile=None,mysqluser=None,userpassword=None,port=None,host=None):
         date_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
         newestdir = []
         if os.path.exists(tool) and re.search("[1|3|5|7]+",oct(os.stat(tool).st_mode)[-3:]) != None:
-            cmd=tool+" --defaults-file="+mysqlconfigurefile+" --user="+mysqluser+" --password='"+userpassword+"' --port="+port+"  "+backuptodir
+            cmd=tool+" --defaults-file="+mysqlconfigurefile+" --user="+mysqluser+" --host="+host+" --password='"+userpassword+"' --port="+port+"  "+backuptodir
             subprocess.call(cmd,shell=True)
         else:
             pass
@@ -89,7 +89,7 @@ class backup(object):
         if "bind-address" in readinfo.MysqlConfigureFile(cnffile):
             bindadd = readinfo.MysqlConfigureFile(cnffile)["bind-address"]
         else:
-            bindadd = "localhost"
+            bindadd = host
         mysqlbinlogpath = os.path.dirname(mysqlbinlogindexfile)
         datetoday = datetime.datetime.now().strftime('%Y%m%d')
         flag=bindadd+"-"+mysqlport
@@ -121,11 +121,11 @@ class backup(object):
         if "bind-address" in readinfo.MysqlConfigureFile(mysqlconfigurefile):
             bindadd = readinfo.MysqlConfigureFile(mysqlconfigurefile)["bind-address"]
         else:
-            bindadd = "localhost"
+            bindadd = host
         flag = bindadd + "-" + mysqlport
         datetoday = datetime.datetime.now().strftime('%Y%m%d')
         backupdir = os.path.join(backupdir,flag)
-        self.backupMysqlAlldata(tool=tool,backuptodir=backupdir,mysqlconfigurefile=mysqlconfigurefile,mysqluser=mysqluser,userpassword=userpassword,port=mysqlport)
+        self.backupMysqlAlldata(tool=tool,backuptodir=backupdir,mysqlconfigurefile=mysqlconfigurefile,mysqluser=mysqluser,userpassword=userpassword,port=mysqlport,host=host)
 
 #===================================================================================================
 parameter=getParameter()
