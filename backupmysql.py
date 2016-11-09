@@ -144,7 +144,6 @@ class backup(object):
 #===================================================================================================
 parameter=getParameter()
 args=parameter.getmysqlParameter()
-# print(args)
 BU=backup()
 if args.fullbackup:
     BU.connAndbackupalldata(tool="/usr/bin/innobackupex",backupdir=args.backupdir,mysqlconfigurefile=args.configurefile,mysqluser=args.user,userpassword=args.passwd,host=args.host)
