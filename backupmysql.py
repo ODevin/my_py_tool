@@ -9,7 +9,7 @@ class getParameter(object):
         parser.add_argument('-A', action='store_true',default=False,dest='fullbackup',help='back up all data')
         parser.add_argument('-u', action='store',default="root",dest='user',help='mysql user,default value "root"')
         parser.add_argument('-p', action='store',default="",dest='passwd',help='mysql user password , default value is None')
-        parser.add_argument('--host', action='store',default=None,dest='host',help='mysql server host')
+        parser.add_argument('--host', action='store',default="localhost",dest='host',help='mysql server host')
         args,unkuown=parser.parse_known_args()
         return args
 
