@@ -52,14 +52,22 @@ class backup(object):
         date_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
         newestdir = []
         if os.path.exists(tool) and re.search("[1|3|5|7]+",oct(os.stat(tool).st_mode)[-3:]) != None:
-            if host!=None:
+            if host!=None and userpassword!="":
                 cmd=tool+" --defaults-file="+mysqlconfigurefile+" --user="+mysqluser+" --host="+host+" --password='"+userpassword+"' --port="+port+"  "+backuptodir
-            else:
+            elif host == None and userpassword!="":
                 cmd=tool+" --defaults-file="+mysqlconfigurefile+" --user="+mysqluser+" --socket="+socker+" --password='"+userpassword+"' --port="+port+"  "+backuptodir
-
+            elif host!=None and userpassword == "":
+                cmd=tool+" --defaults-file="+mysqlconfigurefile+" --user="+mysqluser+" --host="+host+" --port="+port+"  "+backuptodir
+            else:
+                cmd=tool+" --defaults-file="+mysqlconfigurefile+" --user="+mysqluser+" --port="+port+"  "+backuptodir
+            print("whil go %s"%cmd)
             subprocess.call(cmd,shell=True)
         else:
             pass
+        if os.path.exists(backuptodir):
+            pass
+        else:
+            os.makedirs(backuptodir)
         l = os.listdir(backuptodir)
         rulestr="("+date_time+")+"
         for i in l:
