@@ -51,6 +51,10 @@ class backup(object):
     def backupMysqlAlldata(self,tool=None,backuptodir=None,socker=None,mysqlconfigurefile=None,mysqluser=None,userpassword=None,port=None,host=None):
         date_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
         newestdir = []
+        if os.path.exists(backuptodir):
+            pass
+        else:
+            os.makedirs(backuptodir)
         if os.path.exists(tool) and re.search("[1|3|5|7]+",oct(os.stat(tool).st_mode)[-3:]) != None:
             if host!=None and userpassword!="":
                 cmd=tool+" --defaults-file="+mysqlconfigurefile+" --user="+mysqluser+" --host="+host+" --password='"+userpassword+"' --port="+port+"  "+backuptodir
@@ -64,10 +68,11 @@ class backup(object):
             subprocess.call(cmd,shell=True)
         else:
             pass
-        if os.path.exists(backuptodir):
-            pass
-        else:
-            os.makedirs(backuptodir)
+#        if os.path.exists(backuptodir):
+#            pass
+#        else:
+#            os.makedirs(backuptodir)
+        print(backuptodir)
         l = os.listdir(backuptodir)
         rulestr="("+date_time+")+"
         for i in l:
@@ -75,6 +80,7 @@ class backup(object):
                 newestdir.append(i)
             else:
                 pass
+        print("--------------------------->%s"%newestdir)
         if len(newestdir) != 0:
             for j in newestdir:
                 cmd =tool+" --apply-log "+os.path.join(backuptodir,j)
